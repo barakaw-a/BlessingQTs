@@ -2,6 +2,7 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 import sqlite3
+import datetime
 
 def initialize_db(db_path='market_data.db'):
     with sqlite3.connect(db_path) as con:
@@ -9,8 +10,8 @@ def initialize_db(db_path='market_data.db'):
                     CREATE TABLE IF NOT EXISTS prices (
                         symbol VARCHAR NOT NULL,
                         date DATETIME NOT NULL,
-                        open FLOAT, close FLOAT, low FLOAT, high FLOAT, volume INT,
-                        CONSTRAINT PRIMARY KEY (symbol, date)
+                        open FLOAT, high FLOAT, low FLOAT, close FLOAT, volume INT,
+                        PRIMARY KEY (symbol, date)
                     );
                     """)
 
@@ -18,27 +19,34 @@ def initialize_db(db_path='market_data.db'):
 def save_data(symbol: str, db_path = 'market_data.db'):
         
     print("1. Starting download from Yahoo Finance...")
-    data = yf.download(symbol, period='1wk', interval='1d').reset_index()
-    data.columns = data.columns.to_flat_index()
-    print(data.columns)
+    data = yf.download(symbol.upper(), period='3y', interval='1d').reset_index()
+    data['symbol'] = symbol.upper()
     
+    # Isolating OHLCV Headers from downloaded data
+
+    data.columns = data.columns.to_flat_index()
+    data.columns = data.columns.map(lambda x : '_'.join(map(str, x)))
+    data.columns = data.columns.str.split('_').str[0]
+    
+    listed_info = []
+    
+    for idx, row in data.iterrows():
+        listed_info += [row.to_list()]
+        
+        
     if data.empty:
         print("2. Download Error. No data has been downloaded.")
         return
     else:
         print("2. Connecting to database and saving...")
-        with sqlite3.connect(db_path) as con:
-            try:
-                table_name = f'{symbol.lower()}_daily_data'                                
-                
-                current_data = pd.read_sql(f"SELECT * FROM {table_name}", con)
-                print(current_data.columns)
-                combined = pd.merge(current_data, data, how='outer', left_on="'('Date', '')'", right_on="('Date', '')")               
-                combined.to_sql(name=table_name, con=con, index=True, if_exists='replace')
+        with sqlite3.connect(db_path) as con:            
+            for idx, entry in enumerate(listed_info):
+                entry[0] = entry[0].to_pydatetime()
+                print(entry)
+                con.execute(""" INSERT OR REPLACE INTO prices (date, close, high, low, open, volume, symbol)
+                                VALUES(?, ?, ?, ?, ?, ?, ?)
+                                """, entry)
                                 
-                print(f"3. {table_name} successfully updated!")
-            except pd.errors.DatabaseError:
-                data.to_sql(name=table_name, con=con, index=True, if_exists='replace')
-                print(f"3. {table_name} successfully saved to database!")
-        
-save_data('AAPL')
+            print(f"3. Prices successfully updated!")
+            
+save_data('aapl')
