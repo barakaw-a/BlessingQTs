@@ -2,7 +2,6 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 import sqlite3
-import datetime
 
 def initialize_db(db_path='market_data.db'):
     with sqlite3.connect(db_path) as con:
@@ -23,7 +22,6 @@ def save_data(symbol: str, db_path = 'market_data.db'):
     data['symbol'] = symbol.upper()
     
     # Isolating OHLCV Headers from downloaded data
-
     data.columns = data.columns.to_flat_index()
     data.columns = data.columns.map(lambda x : '_'.join(map(str, x)))
     data.columns = data.columns.str.split('_').str[0]
@@ -49,4 +47,3 @@ def save_data(symbol: str, db_path = 'market_data.db'):
                                 
             print(f"3. Prices successfully updated!")
             
-save_data('aapl')
