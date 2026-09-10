@@ -1,4 +1,4 @@
 .vs/
 notebooks/
 market_data.db
-src/_pycache_/
+src/__pycache__
