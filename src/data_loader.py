@@ -1,6 +1,4 @@
 import yfinance as yf
-import numpy as np
-import pandas as pd
 import sqlite3
 
 def initialize_db(db_path='market_data.db'):
@@ -14,14 +12,13 @@ def initialize_db(db_path='market_data.db'):
                     );
                     """)
 
-# db_path by default with attempt to setup a connection with market_data.db unless specified otherwise
 def save_data(symbol: str, db_path = 'market_data.db'):
         
     print("1. Starting download from Yahoo Finance...")
     data = yf.download(symbol.upper(), period='3y', interval='1d').reset_index()
     data['symbol'] = symbol.upper()
     
-    # Isolating OHLCV Headers from downloaded data
+    # Cleaning data headers from multi-index to flattened one word headers
     data.columns = data.columns.to_flat_index()
     data.columns = data.columns.map(lambda x : '_'.join(map(str, x)))
     data.columns = data.columns.str.split('_').str[0]
@@ -31,7 +28,6 @@ def save_data(symbol: str, db_path = 'market_data.db'):
     for idx, row in data.iterrows():
         listed_info += [row.to_list()]
         
-        
     if data.empty:
         print("2. Download Error. No data has been downloaded.")
         return
@@ -40,7 +36,6 @@ def save_data(symbol: str, db_path = 'market_data.db'):
         with sqlite3.connect(db_path) as con:            
             for idx, entry in enumerate(listed_info):
                 entry[0] = entry[0].to_pydatetime()
-                print(entry)
                 con.execute(""" INSERT OR REPLACE INTO prices (date, close, high, low, open, volume, symbol)
                                 VALUES(?, ?, ?, ?, ?, ?, ?)
                                 """, entry)
