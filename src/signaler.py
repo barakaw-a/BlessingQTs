@@ -34,8 +34,4 @@ class Strategy:
             
             df_date_price.loc[valid, 'signals'] = np.where(df_date_price.loc[valid, 'short_sma'] > df_date_price.loc[valid, 'long_sma'], 'Buy', 'Hold')
             
-            return(df_date_price)
-            
-test = Strategy()
-
-print(test.moving_average("AAPL"))
+            return(df_date_price['signals'])
