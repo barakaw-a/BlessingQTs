@@ -4,12 +4,12 @@ import sqlite3
 import data_loader
 
 class Strategy:
-    def __init__(self, db_path: str = 'market_data.db'):
+    def __init__(self, db_path : str = 'market_data.db'):
         self.db_path = db_path
     
-    # Implemented a simple moving average with a short-term of 50 days and long-term of 200 days
+    # Implemented a simple moving average with a short-term of 10 days and long-term of 50 days
     # Returns a Series of orders based on crossovers
-    def moving_average(self, symbol : str, short_term = 50, long_term = 200):
+    def moving_average(self, symbol : str, short_term = 10, long_term = 50):
         with sqlite3.connect(self.db_path) as con:
              
             date_price = con.execute("""
@@ -25,6 +25,7 @@ class Strategy:
             df_date_price['date'] = pd.to_datetime(df_date_price['date'])
             df_date_price.set_index('date', inplace = True)
             
+            
             df_date_price['short_sma'] = (df_date_price['price'].rolling(window = short_term).mean())
             df_date_price['long_sma'] = (df_date_price['price'].rolling(window = long_term).mean())
             
@@ -32,6 +33,6 @@ class Strategy:
             
             valid = df_date_price['long_sma'].notna()
             
-            df_date_price.loc[valid, 'signals'] = np.where(df_date_price.loc[valid, 'short_sma'] > df_date_price.loc[valid, 'long_sma'], 'Buy', 'Hold')
+            df_date_price.loc[valid, 'signals'] = np.where(df_date_price.loc[valid, 'short_sma'] > df_date_price.loc[valid, 'long_sma'], 'Buy', 'Sell')
             
             return(df_date_price['signals'])

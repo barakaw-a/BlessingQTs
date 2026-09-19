@@ -1,8 +1,12 @@
 import yfinance as yf
 import sqlite3
 
-def initialize_db(db_path='market_data.db'):
-    with sqlite3.connect(db_path) as con:
+default_path = 'market_data.db'
+
+def initialize_db(db_path = 'market_data.db'):
+    global default_path
+    default_path = db_path 
+    with sqlite3.connect(default_path) as con:
         con.execute("""
                     CREATE TABLE IF NOT EXISTS prices (
                         symbol VARCHAR NOT NULL,
@@ -25,6 +29,7 @@ def save_data(symbol: str, db_path = 'market_data.db'):
     
     listed_info = []
     
+    # Transforming DataFrame rows to list elements for each date
     for idx, row in data.iterrows():
         listed_info += [row.to_list()]
         
