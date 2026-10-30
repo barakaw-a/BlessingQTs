@@ -8,7 +8,7 @@ class Strategy:
         self.db_path = db_path
     
     # Retrive all stock price data for a given symbol
-    # Newest entries at the top
+    # Newest entries at the bottom
     def price_fetching(self, symbol: str):
         with sqlite3.connect(self.db_path) as con:
             
@@ -41,7 +41,7 @@ class Strategy:
           
         valid = df_price['long_sma'].notna()
             
-        df_price.loc[valid, 'signals'] = np.where(df_price.loc[valid, 'short_sma'] > df_price.loc[valid, 'long_sma'], 'Buy', 'Sell')
+        df_price.loc[valid, 'signals'] = np.where(df_price.loc[valid, 'short_sma'] > df_price.loc[valid, 'long_sma'], 'Bullish', 'Bearish')
             
         return(df_price['signals'])
         
@@ -51,17 +51,18 @@ class Strategy:
         
         return 0
     
+    @staticmethod
     def calculate_ema(price_data, period):
         
         multiplier = (2 / (period + 1))
         ema = []
         
         # Compute the first value for our EMA
-        inital_sma = sum(price_data[:period]) / period
-        ema.append(inital_sma)
+        inital_ema = sum(price_data[:period]) / period
+        ema.append(inital_ema)
         
         for price in price_data[period:]:
-            new_ema = (price * multiplier) + (multiplier * ema[-1])
+            new_ema = (price * multiplier) + ((1 - multiplier) * ema[-1])
             ema.append(new_ema)
             
         return ema
