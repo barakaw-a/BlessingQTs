@@ -45,3 +45,23 @@ class Strategy:
             
         return(df_price['signals'])
         
+    def exp_moving_average(self, symbol: str, short_term = 10, long_term = 50):
+        
+        # TBC
+        
+        return 0
+    
+    def calculate_ema(price_data, period):
+        
+        multiplier = (2 / (period + 1))
+        ema = []
+        
+        # Compute the first value for our EMA
+        inital_sma = sum(price_data[:period]) / period
+        ema.append(inital_sma)
+        
+        for price in price_data[period:]:
+            new_ema = (price * multiplier) + (multiplier * ema[-1])
+            ema.append(new_ema)
+            
+        return ema
